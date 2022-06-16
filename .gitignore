@@ -8,7 +8,7 @@ __pycache__/
 *.so
 
 # remove classifier
-/classifier/classifier.h5
+# /classifier/classifier.h5
 
 # Distribution / packaging
 .Python
