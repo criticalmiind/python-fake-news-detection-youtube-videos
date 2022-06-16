@@ -1,0 +1,30 @@
+--------------------------------------
+Test Name:
+- Test login
+Messages:
+- Message - Successful login
+Errors: None
+--------------------------------------
+Test Name:
+- Test video link
+Messages:
+- Message - Successful video input
+Errors: None
+--------------------------------------
+Test Name:
+- Test fact saving
+Messages:
+- Message - Successful fact save
+Errors: None
+--------------------------------------
+Test Name:
+- Check saved facts
+Messages:
+- Message - Successfully load saved facts
+Errors: None
+--------------------------------------
+Test Name:
+- Delete Fact
+Messages:
+- Message - Successfully deleted fact
+Errors: None

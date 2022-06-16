@@ -1,0 +1,89 @@
+{% extends 'main/header.html' %}
+
+{% block content %}
+
+{% if not user.is_authenticated %}
+<script>
+  Swal.fire({
+    title: 'Do I know you?',
+    text: 'Seems like you are not logged in, therefore you cannot enter',
+    icon: 'warning',
+    showCancelButton: false,
+    confirmButtonText: 'Yes, Log me in!',
+    cancelButtonText: 'No, go to Home!',
+    reverseButtons: true,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    allowEnterKey: false,
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = "/login"
+    }
+  });
+</script>
+
+{% endif %}
+
+<div class="container my-5 h-100">
+  <div class="row my-5 p-3">
+    <table id='claims'>
+      <tr>
+        <th>Claim</th>
+        <th>Class</th>
+        <th>Save date</th>
+        <th>Actions</th>
+      </tr>
+      {% for obj in object_list %}
+      <tr>
+        <td>{{obj.stmt_text}}</td>
+        <td>{{obj.stmt_status}}</td>
+        <td>{{obj.stmt_date}}</td>
+        <td><button class='btn btn-info del-btn' id='delete_btn'>Delete</button></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<script>
+  $('#claims').on('click', '.del-btn', function () {
+			var fact = $(this).parents('tr');
+			var fact_text = fact.children('td').html();
+			var fact_owner = '{{user.id}}';
+			console.log(fact_owner);
+      console.log(fact_text);
+      $.ajax({
+				type: "POST",
+				url: '/delete',
+				data: {
+					csrfmiddlewaretoken: '{{ csrf_token }}',
+					'text': fact_text,
+					'owner': fact_owner
+				},
+				success: function (data) {
+					var done = data['done'];
+					if (done == 1) {
+						Swal.fire(
+							'Success!',
+							'Fact Deleted Successfully!',
+							'success'
+						)
+					} else {
+						Swal.fire(
+							'Failure!',
+							'Could not delete fact!',
+							'error'
+						)
+					}
+          window.location.reload(true); 
+				}
+			});
+		});
+  // $(document).ready(function () {
+    // $.ajax({
+    //   url: '/getSavedFacts'
+    // });
+  // });
+</script>
+
+{% endblock %}
