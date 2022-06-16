@@ -60,5 +60,5 @@ docs/_build/
 
 # PyBuilder
 target/
-classifier/classifier.h5
+# classifier/classifier.h5
 static/assets/.DS_Store
