@@ -62,3 +62,4 @@ docs/_build/
 target/
 # classifier/classifier.h5
 static/assets/.DS_Store
+classifier/.DS_Store
