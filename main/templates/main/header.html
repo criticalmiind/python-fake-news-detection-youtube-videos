@@ -30,6 +30,17 @@
 	<!-- Jquery JS -->
 	<script src="{% static 'assets/js/jquery.min.js' %}"></script>
 	<script src="{% static 'assets/js/sweetalert2.all.min.js' %}"></script>
+
+
+	<link rel="stylesheet" type="text/css" href="{% static 'assets/css/toastr.min.css' %}" media="all">
+	<script type="text/javascript" src="{% static 'assets/js/toastr.min.js' %}"></script>
+	<style>
+		#toast-container {
+			position: absolute;
+			top: 65px !important;
+			right: 10px;
+		}
+	</style>
 </head>
 
 <body>
@@ -47,7 +58,8 @@
 					<div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col logo_section">
 						<div class="full">
 							<div class="center-desk">
-								<div class="logo"> <a href="/"><img src="{% static 'assets/images/logo.png' %}" alt="#"></a> </div>
+								<div class="logo"> <a href="/"><img src="{% static 'assets/images/logo.png' %}"
+											alt="#"></a> </div>
 							</div>
 						</div>
 					</div>
@@ -76,7 +88,8 @@
 										</li>
 
 										{% endif %}
-										<li class="mean-last"> <a disabled href="#"><img src="{% static 'assets/images/top-icon.png' %}" alt="#" /></a> </li>
+										<li class="mean-last"> <a disabled href="#"><img
+													src="{% static 'assets/images/top-icon.png' %}" alt="#" /></a> </li>
 									</ul>
 								</nav>
 							</div>
@@ -88,6 +101,30 @@
 		<!-- end header inner -->
 	</header>
 	<!-- end header -->
+	{% if error %}
+	<script type=text/javascript>
+	toastr.options = {
+  "closeButton": true,
+  "debug": false,
+  "newestOnTop": false,
+  "progressBar": false,
+  "positionClass": "toast-top-right",
+  "preventDuplicates": false,
+  "onclick": null,
+  "showDuration": "300",
+  "hideDuration": "1000",
+  "timeOut": "5000",
+  "extendedTimeOut": "1000",
+  "showEasing": "swing",
+  "hideEasing": "linear",
+  "showMethod": "fadeIn",
+  "hideMethod": "fadeOut"
+}
+toastr.error('{{error}}')
+
+
+	</script>
+	{% endif %}
 
 	{% include 'main/includes/messages.html' %}
 

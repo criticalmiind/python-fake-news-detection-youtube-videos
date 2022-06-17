@@ -48,15 +48,17 @@ def predictData(claims, use_mean = False):
     df.data = df.data.transform(gensim.parsing.preprocessing.preprocess_string)
     tokenizer = pickle.load(open('classifier/tokenizer.pkl', 'rb'))
     model = load_model('classifier/classifier.h5')
-    k_max_sequence_len = 1500
+    # k_max_sequence_len = 1500
+    k_max_sequence_len = 224*224*3
     pdata = keras.preprocessing.sequence.pad_sequences(tokenizer.texts_to_sequences(df.data), maxlen = k_max_sequence_len)
 
     print("\n\n\n<======================>")
     print("pdata:")
-    print(pdata)
+    print(len(pdata[0]))
     print("\n\n\n<======================>")
+    pdata=pdata.reshape(1,224,224,3)
     ypred = model.predict(pdata) # Error in this line
-    ypred = ypred.reshape(len(ypred))
+    ypred = ypred.reshape(len(ypred[0]))
     probs = ypred.round(4)
     #cutoff = np.mean(ypred) # change this after adding google scraping
     if use_mean:
@@ -70,109 +72,136 @@ def predictData(claims, use_mean = False):
 
 # H
 def generate_claims(request):
-  video_id = request.POST['id']
-  print(video_id)
-  tdict = YouTubeTranscriptApi.get_transcript(video_id)
-  # print(tdict)
-  api_key = "b033571c3e114464b2c82f0d3e5bb132"
+  try:
+    video_id = request.POST['id']
+    print(video_id)
+    tdict = YouTubeTranscriptApi.get_transcript(video_id)
+    # print(tdict)
+    api_key = "b033571c3e114464b2c82f0d3e5bb132"
 
-  sentences = []
-  j = 0
-  t = ""
-  for i in tdict:
-    if (j == 3):
-      sentences.append(t)
-      j = 0
-      t = ""
-    t = t + " " + i['text']
-    j+=1
+    sentences = []
+    j = 0
+    t = ""
+    for i in tdict:
+      if (j == 3):
+        sentences.append(t)
+        j = 0
+        t = ""
+      t = t + " " + i['text']
+      j+=1
 
-  sentences = [x.replace('\n',' ') for x in sentences]
-  tdict_txts = '\n'.join(sentences)
+    sentences = [x.replace('\n',' ') for x in sentences]
+    tdict_txts = '\n'.join(sentences)
 
-  # api_endpoint = f"https://idir.uta.edu/claimbuster/api/v2/score/paragraphs/"
-  # request_headers = {"x-api-key": api_key}
-  # payload = {"input_text": tdict_txts, "delimiter":'\n'}
+    # api_endpoint = f"https://idir.uta.edu/claimbuster/api/v2/score/paragraphs/"
+    # request_headers = {"x-api-key": api_key}
+    # payload = {"input_text": tdict_txts, "delimiter":'\n'}
 
-  # # Send the GET request to the API and store the api response
-  # api_response = requests.post(url=api_endpoint, json=payload, headers=request_headers)
+    # # Send the GET request to the API and store the api response
+    # api_response = requests.post(url=api_endpoint, json=payload, headers=request_headers)
 
 
-  api_endpoint = "https://idir.uta.edu/claimbuster/api/v2/score/text/"
-  request_headers = {"x-api-key": api_key}
-  payload = {"input_text": tdict_txts}
+    api_endpoint = "https://idir.uta.edu/claimbuster/api/v2/score/text/"
+    request_headers = {"x-api-key": api_key}
+    payload = {"input_text": tdict_txts}
 
-  # Send the POST request to the API and store the api response
-  api_response = requests.post(url=api_endpoint, json=payload, headers=request_headers)
+    # Send the POST request to the API and store the api response
+    api_response = requests.post(url=api_endpoint, json=payload, headers=request_headers)
 
-  # print out the JSON payload the API sent back
-  sent_ls = []
-  for res in api_response.json()['results']:
+    # print out the JSON payload the API sent back
+    sent_ls = []
+    for res in api_response.json()['results']:
+      
+      # for item in res:
+      sent_ls.append([res['text'],res['score']])
+
+    # sent_ls = [x[0] for x in sent_ls if x[1] > 0.5]
+    sent_ls = [x[0] for x in sent_ls]
+
+    final_claim_ls = []
+    for capt in tdict:
+      for ranked in sent_ls:
+        if capt['text'] in ranked and len(capt['text'].split(' ')) >= 3:
+          final_claim_ls.append({'claim':ranked, 'start':capt['start'], 'duration':capt['duration'], 'status': '', 'probability':0})
     
-    # for item in res:
-    sent_ls.append([res['text'],res['score']])
+    # remove duplicate claims
+    done = set()
+    rem_dup = []
+    for d in final_claim_ls:
+      if d['claim'] not in done:
+        done.add(d['claim']) 
+        rem_dup.append(d)
+    final_claim_ls = rem_dup
 
-  sent_ls = [x[0] for x in sent_ls if x[1] > 0.5]
+    #==================== using saved data 
+    # loaded = False
+    # with open('classifier/claim.pkl', 'rb') as f:
+    #   claim_data = pickle.load(f)
+    # with open('classifier/final_ls.pkl', 'rb') as f:
+    #   final_claim_ls = pickle.load(f)
+    # done = set()
+    # rem_dup = []
+    # for d in final_claim_ls:
+    #   if d['claim'] not in done:
+    #     done.add(d['claim']) 
+    #     rem_dup.append(d)
+    # final_claim_ls = rem_dup
+    # final_claim_ls=[final_claim_ls[0],final_claim_ls[1]]
+    # for x in final_claim_ls:
+    #   claim_data = [sub['claim'] for sub in [x]]
+    # result, prob = predictData(claim_data, use_mean = True)
+    # raw_claim_data = [sub['claim'] for sub in final_claim_ls]
+    # db_status, db_prob, db_data = check_database(raw_claim_data)
 
-  final_claim_ls = []
-  for capt in tdict:
-    for ranked in sent_ls:
-      if capt['text'] in ranked and len(capt['text'].split(' ')) >= 3:
-        final_claim_ls.append({'claim':ranked, 'start':capt['start'], 'duration':capt['duration'], 'status': '', 'probability':0})
-  
-  # remove duplicate claims
-  done = set()
-  rem_dup = []
-  for d in final_claim_ls:
-    if d['claim'] not in done:
-      done.add(d['claim']) 
-      rem_dup.append(d)
-  final_claim_ls = rem_dup
-  
-  # TODO: uncomment to switch to google snippets
-  # claim_data = [get_claim_and_snippet(sub['claim']) for sub in final_claim_ls]
-  if video_id == 'zDbK0IpNTmM':
-    print('Using cached search data!')
-    loaded = True
-    with open('classifier/claim.pkl', 'rb') as f:
-      claim_data = pickle.load(f)
-    with open('classifier/final_ls.pkl', 'rb') as f:
-      final_claim_ls = pickle.load(f)
-    print(len(claim_data), len(final_claim_ls))
-    result, prob = predictData(claim_data)
+    # TODO: uncomment to switch to google snippets
+    # claim_data = [get_claim_and_snippet(sub['claim']) for sub in final_claim_ls]
+    # if video_id == 'zDbK0IpNTmM':
+    #   print('Using cached search data!')
+    #   loaded = True
+    #   with open('classifier/claim.pkl', 'rb') as f:
+    #     claim_data = pickle.load(f)
+    #   with open('classifier/final_ls.pkl', 'rb') as f:
+    #     final_claim_ls = pickle.load(f)
+    #   print(len(claim_data), len(final_claim_ls))
+    #   result, prob = predictData(claim_data)
+    #   raw_claim_data = [sub['claim'] for sub in final_claim_ls]
+    #   db_status, db_prob, db_data = check_database(raw_claim_data)
+    # else:
+    #     loaded = False
+    #     claim_data = [sub['claim'] for sub in final_claim_ls]
+    #     result, prob = predictData(claim_data, use_mean = True)
+    #     db_status, db_prob, db_data = check_database(claim_data)
+
+    
+    
+
+    # ===============uncomment if using api response data
+    loaded=False
+    claim_data = [sub['claim'] for sub in final_claim_ls]
+    result, prob = predictData(claim_data, True)
     raw_claim_data = [sub['claim'] for sub in final_claim_ls]
     db_status, db_prob, db_data = check_database(raw_claim_data)
-  else:
-      loaded = False
-      claim_data = [sub['claim'] for sub in final_claim_ls]
-      result, prob = predictData(claim_data, use_mean = True)
-      db_status, db_prob, db_data = check_database(claim_data)
+    
+    # I need: db_status, db_prob, and db = list of dictionaries, each having status, reason
+    
 
-  
-  
+    for i in range(len(final_claim_ls)):
+      final_claim_ls[i]['status'] = result[i]
+      p = prob[i] if result[i] == 'True' else 1 - prob[i]
+      if not loaded:
+        p = 1-p if p < 0.5 else p
+      final_claim_ls[i]['probability'] = str(round(100 * p, 2))
+      final_claim_ls[i]['db_status'] = db_status[i]
+      final_claim_ls[i]['db_prob'] = str(100*db_prob[i])
+      final_claim_ls[i]['db_data'] = db_data[i]
 
-
-  #claim_data = [sub['claim'] for sub in final_claim_ls]
-  result, prob = predictData(claim_data, True)
-  
-  # I need: db_status, db_prob, and db = list of dictionaries, each having status, reason
-  
-
-  
-  for i in range(len(final_claim_ls)):
-    final_claim_ls[i]['status'] = result[i]
-    p = prob[i] if result[i] == 'True' else 1 - prob[i]
-    if not loaded:
-      p = 1-p if p < 0.5 else p
-    final_claim_ls[i]['probability'] = str(round(100 * p, 2))
-    final_claim_ls[i]['db_status'] = db_status[i]
-    final_claim_ls[i]['db_prob'] = str(100*db_prob[i])
-    final_claim_ls[i]['db_data'] = db_data[i]
-
-  # sort claims by start
-  final_claim_ls = sorted(final_claim_ls, key=lambda k: k['start'])
-  y = json.dumps(final_claim_ls)
-  return HttpResponse(y, content_type="application/json")
+    # sort claims by start
+    final_claim_ls = sorted(final_claim_ls, key=lambda k: k['start'])
+    y = json.dumps(final_claim_ls)
+    return HttpResponse(y, content_type="application/json")
+  except Exception as e:
+    print('error:::',e)
+    return JsonResponse({'message': 'Subtitles are disabled for this video'}, status=500) 
 
 
 

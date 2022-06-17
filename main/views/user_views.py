@@ -18,6 +18,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 
 def homepage(request):
+    errorMsg = request.GET.get('error', None)
     # if this is a POST request we need to process the form data
     form = VideoForm()
     if request.method == 'POST':
@@ -29,7 +30,7 @@ def homepage(request):
     else:
         print('form is not valid')
         form = VideoForm(auto_id=False)
-    return render(request=request, template_name='main/home.html', context={'video_form': form})
+    return render(request=request, template_name='main/home.html', context={'video_form': form,'error':errorMsg})
 
 def contact(request):
 	if request.method == 'POST':

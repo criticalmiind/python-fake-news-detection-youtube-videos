@@ -63,7 +63,8 @@
 				</ol>
 			</section>
 		</div>
-		<div id="stats" style="display: block; width:100%; height:100%; padding: 70px 0; margin-top: 70px; margin-left: auto; margin-right: auto;">
+		<div id="stats"
+			style="display: block; width:100%; height:100%; padding: 70px 0; margin-top: 70px; margin-left: auto; margin-right: auto;">
 			<script src="https://cdn.anychart.com/releases/8.0.0/js/anychart-base.min.js"></script>
 			<h2 style="text-align: center;">Claim Statistics</h2>
 			<div id="graph-container"></div>
@@ -71,7 +72,8 @@
 	</div>
 </div>
 <!-- Modal -->
-<div class="modal fade" id="claimDetails" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+<div class="modal fade" id="claimDetails" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+	aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -87,18 +89,21 @@
 				</div>
 				<hr>
 				<div>
-					We are &nbsp; <strong id="info-percent" class="text-primary">90</strong><strong class="text-primary">%</strong> &nbsp; sure this claim is
+					We are &nbsp; <strong id="info-percent" class="text-primary">90</strong><strong
+						class="text-primary">%</strong> &nbsp; sure this claim is
 					&nbsp;
 					<strong id="info-status">FALSE!</strong>
 				</div>
 				<hr>
 				<div id="db-info-exists">
-					<strong id="db-info-percent" class="text-primary">90</strong><strong class="text-primary">%</strong> &nbsp; of our users think that this
+					<strong id="db-info-percent" class="text-primary">90</strong><strong class="text-primary">%</strong>
+					&nbsp; of our users think that this
 					claim is
 					&nbsp;
 					<strong id="db-info-status">FALSE!</strong>
-                    &nbsp;
-                    <button class="btn btn-success btn-circle show-claims-btn" data-toggle="modal" data-target="#claimList"><i class="fas fa-info"></i></button>
+					&nbsp;
+					<button class="btn btn-success btn-circle show-claims-btn" data-toggle="modal"
+						data-target="#claimList"><i class="fas fa-info"></i></button>
 				</div>
 				<div id="db-info-doesnt">
 					There is no such claim in the database
@@ -111,7 +116,7 @@
 					<a href="" role="button" data-toggle="modal" data-target="#claimReview" class="text-success">
 						<strong>review</strong>
 					</a> it.
-					
+
 				</div>
 
 			</div>
@@ -122,7 +127,8 @@
 	</div>
 </div>
 
-<div class="modal fade" id="claimReview" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+<div class="modal fade" id="claimReview" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+	aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -153,7 +159,8 @@
 	</div>
 </div>
 
-<div class="modal fade" id="claimList" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+<div class="modal fade" id="claimList" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+	aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -462,7 +469,10 @@
 
 			},
 			error: function (xhr, textStatus, errorThrown) {
-				alert("Please report this error: " + errorThrown + xhr.status + xhr.responseText);
+				const errorMsg = JSON.parse(xhr.responseText)['message']
+				// console.log(xhr.responseText, textStatus, typeof (JSON.parse(xhr.responseText)['message']))
+				// alert("Please report this error: " + errorThrown + xhr.status + xhr.responseText);
+				location.href = `/?error=${errorMsg}`
 			}
 		});
 
@@ -475,7 +485,7 @@
 		$("#facts").on('click', '.save-btn', function () {
 			var fact = $(this).parents('li');
 			var fact_text = fact.children('div').children('.claim').html()
-            fact_text = fact_text.substring(0, fact_text.indexOf('<'))
+			fact_text = fact_text.substring(0, fact_text.indexOf('<'))
 			var fact_status_temp = fact.find('.status-btn').html();
 			var fact_status = 'False';
 			if (fact_status_temp == "TRUE") {
