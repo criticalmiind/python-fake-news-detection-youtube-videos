@@ -44,7 +44,8 @@ def getVideo(request):
 
 # Assuming claims is a list of claims, we predict on it
 def predictData(claims, use_mean = False):
-    df = pd.DataFrame(claims, columns = ['data'])
+  # for claims in claim_data:
+    df = pd.DataFrame([claims], columns = ['data'])
     df.data = df.data.transform(gensim.parsing.preprocessing.preprocess_string)
     tokenizer = pickle.load(open('classifier/tokenizer.pkl', 'rb'))
     model = load_model('classifier/classifier.h5')
@@ -61,12 +62,18 @@ def predictData(claims, use_mean = False):
     ypred = ypred.reshape(len(ypred[0]))
     probs = ypred.round(4)
     #cutoff = np.mean(ypred) # change this after adding google scraping
-    if use_mean:
-        cutoff = np.mean(ypred)
+    # if use_mean:
+    #     cutoff = np.mean(ypred)
+    # else:
+    #     # cutoff = 0.5
+    cutoff=0.0005
+    # res = ypred > cutoff 
+    res=probs>cutoff
+    res = np.array(res, dtype = bool)
+    if res[0] and res[1]:
+      res = ['True']
     else:
-        cutoff = 0.5
-    res = ypred > cutoff 
-    res = np.array(res, dtype = str)
+      res = ['False']
     return res, probs
     
 
@@ -76,7 +83,7 @@ def generate_claims(request):
     video_id = request.POST['id']
     print(video_id)
     tdict = YouTubeTranscriptApi.get_transcript(video_id)
-    # print(tdict)
+    print(tdict)
     api_key = "b033571c3e114464b2c82f0d3e5bb132"
 
     sentences = []
@@ -133,6 +140,35 @@ def generate_claims(request):
         rem_dup.append(d)
     final_claim_ls = rem_dup
 
+
+    # ================For using pre-saved data latest code
+    # final_result = []
+    # final_prob = []
+    # loaded=False
+    # with open('classifier/claim.pkl', 'rb') as f:
+    #   claim_data = pickle.load(f)
+    # with open('classifier/final_ls.pkl', 'rb') as f:
+    #   final_claim_ls = pickle.load(f)
+    # final_claim_ls = final_claim_ls[:5]
+    # done = set()
+    # rem_dup = []
+    # for d in final_claim_ls:
+    #   if d['claim'] not in done:
+    #     done.add(d['claim']) 
+    #     rem_dup.append(d)
+    # final_claim_ls = rem_dup
+    # claim_data = []
+    # for x in final_claim_ls:
+    #   claim_data.append(x['claim'])
+    # for claims in claim_data:
+    #   result, prob = predictData(claims, True)
+    #   final_result.append(result)
+    #   final_prob.append(prob)
+    # result = final_result
+    # prob = final_prob
+    # raw_claim_data = [sub['claim'] for sub in final_claim_ls]
+    # db_status, db_prob, db_data = check_database(raw_claim_data)
+
     #==================== using saved data 
     # loaded = False
     # with open('classifier/claim.pkl', 'rb') as f:
@@ -176,9 +212,16 @@ def generate_claims(request):
     
 
     # ===============uncomment if using api response data
+    final_result = []
+    final_prob = []
     loaded=False
     claim_data = [sub['claim'] for sub in final_claim_ls]
-    result, prob = predictData(claim_data, True)
+    for claims in claim_data:
+      result, prob = predictData(claims, False)
+      final_result.append(result)
+      final_prob.append(prob)
+    result = final_result
+    prob = final_prob
     raw_claim_data = [sub['claim'] for sub in final_claim_ls]
     db_status, db_prob, db_data = check_database(raw_claim_data)
     
@@ -187,7 +230,7 @@ def generate_claims(request):
 
     for i in range(len(final_claim_ls)):
       final_claim_ls[i]['status'] = result[i]
-      p = prob[i] if result[i] == 'True' else 1 - prob[i]
+      p = prob[i][0] if result[i] == 'True' else 1 - prob[i][0]
       if not loaded:
         p = 1-p if p < 0.5 else p
       final_claim_ls[i]['probability'] = str(round(100 * p, 2))
@@ -257,6 +300,6 @@ def result_view(request):
   result, prob = predictData(sentences)
   return_ls = []
   for i in range(len(sentences)):
-    p = prob[i] if result[i] == 'True' else 1 - prob[i]
+    p = prob[i][0] if result[i] == 'True' else 1 - prob[i][0]
     return_ls.append({'claim':sentences[i] ,'class':result[i], 'probability':str(round(100 * p, 2))})      
   return HttpResponse(json.dumps(return_ls), content_type="application/json")
