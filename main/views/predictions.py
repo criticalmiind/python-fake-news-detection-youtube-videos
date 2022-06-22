@@ -37,6 +37,9 @@ def getVideo(request):
     review_form = ReviewForm(auto_id=False)
     if request.method == "POST":
         form = VideoForm(request.POST, auto_id=False)
+        print("\n\n\n")
+        print(form)
+        print("\n\n\n")
         # claimReviewForm = ReviewForm(request.POST, auto_id=False)
         if form.is_valid():
             print(form.cleaned_data['video_url'])
