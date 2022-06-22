@@ -38,7 +38,7 @@ def getVideo(request):
     if request.method == "POST":
         form = VideoForm(request.POST, auto_id=False)
         print("\n\n\n")
-        print(form)
+        print(form.cleaned_data)
         print("\n\n\n")
         # claimReviewForm = ReviewForm(request.POST, auto_id=False)
         if form.is_valid():
