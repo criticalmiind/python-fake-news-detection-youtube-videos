@@ -33,17 +33,14 @@ from googleapiclient.discovery import build
 from main.models import Review
 
 def getVideo(request):
-    url = ''
     form = VideoForm(auto_id=False)
     review_form = ReviewForm(auto_id=False)
     if request.method == "POST":
-        # form = VideoForm(request.POST, auto_id=False)
-        # print("\n\n\n", request.POST['video_url'], "\n\n")
+        form = VideoForm(request.POST, auto_id=False)
         # claimReviewForm = ReviewForm(request.POST, auto_id=False)
-        url = request.POST['video_url']
-        # if form.is_valid():
-        #     print(form.cleaned_data['video_url'])
-    return render(request, 'main/video.html', context={'url': url, 'review_form': review_form})
+        if form.is_valid():
+            print(form.cleaned_data['video_url'])
+    return render(request, 'main/video.html', context={'url': form.cleaned_data['video_url'], 'review_form': review_form})
 
 # Assuming claims is a list of claims, we predict on it
 def predictData(claims, use_mean = False):
